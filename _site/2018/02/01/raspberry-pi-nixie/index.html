@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-109275873-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-109275873-1');
+</script>
+    <meta charset="utf-8">    
+    <title>Driving a nixie module with a Raspberry Pi</title> 
+    <meta name="description" content="This is Vince's site for various projects he's tinkering with.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato:400,400italic,700,700italic" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="canonical" href="http://justgoodthemes.com/2018/02/01/raspberry-pi-nixie/">
+    <link rel="alternate" type="application/rss+xml" title="vince.patronweb.com Feed" href="http://justgoodthemes.com/feed.xml">
+</head>
+<body>
+    <nav id="top" class="site-navigation">
+        <div class="inner">
+            <button id="menu-toggle" aria-expanded="false">Menu</button>
+            <div class="nav-menu">
+                <ul class="menu">
+                
+                  
+                  
+                  <li class="">
+                    <a class="" href="/">Home</a>
+                  </li>
+                
+                  
+                  
+                  <li class="">
+                    <a class="" href="/about/">About</a>
+                  </li>
+                
+                  
+                  
+                  <li class="">
+                    <a class="" href="/other_sites/">Other Sites</a>
+                  </li>
+                
+                  
+                  
+                  <li class="">
+                    <a class="" href="/tags/">Archives</a>
+                  </li>
+                
+                  
+                  
+                  <li class="">
+                    <a class="" href="/style-guide/">Style Guides</a>
+                  </li>
+                
+                </ul>        
+            </div><!-- .nav-menu -->
+            <a class="subscribe-button fa-feed square fill-horizontal" href="/feed.xml"><span class="screen-reader-text">Subscribe</span></a>
+        </div><!-- .inner -->
+    </nav><!-- .site-navigation -->
+    <header class="site-header">
+        <div class="inner">
+            <h1 class="site-title"><a class="logo-text" href="/">vince.patronweb.com</a></h1>
+            <p class="site-description">Tinker, create, invent</p>
+        </div><!-- .inner -->
+    </header>
+    <div class="site-content">
+    <div class="inner">
+        <main class="site-main">
+            <article class="post">
+                <header class="entry-header"> 
+                    <div class="entry-header-wrap">
+                        
+                        <div class="post-thumbnail">
+                            <img src="/images/posts/pi-nixie.jpg" alt="Driving a nixie module with a Raspberry Pi">
+                        </div><!-- .post-thumbnail -->
+                        
+                        <h1 class="entry-title">Driving a nixie module with a Raspberry Pi</h1>
+                    </div><!-- .entry-header-wrap -->
+                    <div class="entry-meta">
+                        by <span class="post-author">Vince</span> on <time class="published" datetime="2018-02-01">February 1, 2018</time>
+                    </div><!-- .entry-meta -->
+                </header><!-- .entry-header -->
+                <div class="entry-content">
+                    <p>A friend was poking around with these QS30-1 nixie modules from nixieclock.org. He mentioned that all the projects on the ‘net used an Arduino but he really wanted to use a Raspberry Pi.</p>
+
+<p>I looked at the Arduino code and Nixie board schematics and wrote a Python driver for it.</p>
+
+<!--more-->
+
+<h2>Why a Raspberry Pi?</h2>
+
+<p>Because a Pi is way more powerful: it is a computer running the Linux with wifi. This makes it controllable over a network or the internet with all the features and power of a full operating system. And a Raspberry Pi Zero W can be as cheap as an Arduino.</p>
+
+<h2>Nixie module</h2>
+
+<p>This Python module was written using the QS30-1 from <a href="http://www.nixieclock.org/?p=566">nixieclock.org</a> as a reference. This module is stackable for multipe digits and has an RGB LED backlight.</p>
+
+<figure class="caption">
+    <img src="/images/posts/pi-nixie-qs30.jpg" alt="QC30-1 Nixie module" />
+    
+    <figcaption class="caption-text">QC30-1 Nixie module</figcaption> 
+    
+</figure>
+
+<p>I took a look at the schematic and found that it uses the old 74HC595 shift register to drive 16 outputs for each module. 10 outputs drive the nixie digits, 2 for the neon colon dots, and 3 for the RGB led which backlights each module.</p>
+
+<p>The nifty thing is that these modules daisy chain so you can stack as many digits as you want together.</p>
+
+<h2>Github</h2>
+
+<p>I posted the driver to <a href="https://github.com/vpatron0/pi_nixie">Github</a> as open source software.</p>
+
+<h2>How to use</h2>
+
+<p>I made it simple to use by embedding the backlight LED color and colon information as part of the text string you give it. A few examples will make it clear:</p>
+
+<ul>
+  <li>Sending “b12:34” will display “12:34” with a blue backlight</li>
+  <li>Sending “r1.2 g3.4” will display “1.2” in red, followed by a space, and then “3.4” in green.</li>
+</ul>
+
+<h2>Wiring</h2>
+
+<p>These modules require 4 pins for data transfer. The GPIO are “bit-banged” in software. Because no hardware resources are used (other than basic GPIO output function), any available GPIO on the Raspberry Pi can be used.</p>
+
+<p>The line in the example below defines which GPIO pin is used for what function.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nixie = pi_nixie.PiNixie(pinDATA=25, pinSHCP=23, pinSTCP=24, pinOE=18)
+</code></pre></div></div>
+
+<ul>
+  <li>pinDATA – serial data for 74HC595</li>
+  <li>pinSHCP – 74HC595 shifts serial data on rising edge</li>
+  <li>pinSTCP – 74HC595 stores data on rising edge</li>
+  <li>pinOE – high turns on display and backlight, off turns off display and backlight</li>
+</ul>
+
+<p>Note that pinOE is also used for adjusting the brightness of the digits and the backlight LEDs by PWM of the pinOE signal.</p>
+
+<p>The numbers correspond to the GPIO number and not the actual pin number of the header connector. See the documentation for RPi.GPIO for details.</p>
+
+<h2>Voltage Level Translator</h2>
+
+<p>The Raspberry Pi uses 3.3V logic, but the “Arduino compatible” Nixie modules use a 74HC595 shift register IC that is powered at 5V and, technically, should be driven with 5 Volt logic. 3.3 Volts does not meet the 74HC595 datasheet minimum for a logic “1” (Vih). However, in tested HW, it works fine.</p>
+
+<p>If you want to meet all technical requirements for a very robust design, you can use a 3.3V to 5V level shifter such as a 74HC125.</p>
+
+<p>I’ll try to help these Nixie and VFD (vacuum flourescent display) kit vendors make more products for the Raspberry Pi.</p>
+
+
+                </div><!-- .entry-content -->
+                <footer class="entry-footer">
+                    <div class="share-post">
+                        <span>Share</span>
+                        <a class="fa-twitter" target="_blank" href="https://twitter.com/intent/tweet?text=Driving%20a%20nixie%20module%20with%20a%20Raspberry%20Pi&amp;url=http://justgoodthemes.com/2018/02/01/raspberry-pi-nixie/"><span class="screen-reader-text">Twitter</span></a>
+                        <a class="fa-facebook" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=http://justgoodthemes.com/2018/02/01/raspberry-pi-nixie/&amp;t=Driving%20a%20nixie%20module%20with%20a%20Raspberry%20Pi"><span class="screen-reader-text">Facebook</span></a>
+                        <a class="fa-google-plus" target="_blank" href="http://plus.google.com/share?url=http://justgoodthemes.com/2018/02/01/raspberry-pi-nixie/"><span class="screen-reader-text">Google+</span></a>
+                    </div><!-- .share-post -->
+                    
+                    <div class="tag-links">
+                        Tags: <a href="/tags/index.html#nixie" title="Pages tagged nixie" rel="tag">nixie</a><a href="/tags/index.html#raspberry+pi" title="Pages tagged raspberry pi" rel="tag">raspberry pi</a><a href="/tags/index.html#python" title="Pages tagged python" rel="tag">python</a>
+                    </div>
+                    
+                </footer><!-- .entry-footer -->
+            </article><!-- .post -->
+            <div class="author-box">
+                <div class="author-info">
+                    <div class="author-avatar" style="background-image: url(/images/vince-sketch.jpg)"><span class="screen-reader-text">Vince's Picture</span></div>
+                    <div class="author-details">
+                        <h2 class="author-title">About Vince</h2>
+                        <p class="author-bio">Vince has loved to tinker since he was a kid. He became an engineer so he can play all the time.</p>
+                        <span class="author-location"><i class="fa-map-marker" aria-hidden="true"></i> California, USA</span>
+                        <span class="author-website"><i class="fa-chain" aria-hidden="true"></i> <a href="https://www.facebook.com/vince.patron" target="_blank"> https://www.facebook.com/vince.patron</a></span>
+                    </div><!-- .author-details -->
+                </div><!-- .author-info -->
+            </div><!-- .author-box -->
+            <nav class="post-navigation">
+                <h2 class="screen-reader-text">Post navigation</h2>
+                
+                
+                <div class="nav-next">
+                    <div class="nav-inside">
+                        
+                        <a href="/2018/02/18/Hummicam-Raspberry-Pi-wildlife-camera/" class="nav-thumb" style="background-image: url(/images/posts/hummicam-side.jpg)"></a>
+                        
+                        <div class="nav-before">Next</div>
+                        <div class="nav-title"><a href="/2018/02/18/Hummicam-Raspberry-Pi-wildlife-camera/">Hummicam, Raspberry Pi wildlife camera</a></div>
+                        <div class="nav-date">February 18, 2018</div>
+                    </div><!-- .nav-inside -->
+                </div><!-- .nav-next -->
+                
+            </nav><!-- .post-navigation -->
+            
+                <div class="comments-area">
+    <div class="comments-inner">
+        <h2 class="comments-title">Comments</h2>
+        <div id="disqus_thread"></div>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus</a>.</noscript>
+    </div><!-- .comments-inner -->
+</div><!-- .comments-area -->
+
+<script type="text/javascript">
+    var disqus_shortname = 'vince-patronweb';
+    var disqus_developer = 0;
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+</script>
+
+            
+        </main><!-- .site-main -->
+        <aside class="sidebar">
+
+    
+    <section class="widget widget-text">
+        <h2 class="widget-title">About Vince</h2>
+        <p>Vince has loved to tinker since he was a kid. He became an engineer so he can play all the time.</p>
+    </section><!-- .widget-text -->
+    
+
+    
+
+    
+
+    <section class="widget widget-recent-posts">
+        <h2 class="widget-title">Latest Posts</h2>
+        <ul class="recent-posts">
+            
+            <li class="recent-item"><a href="/2018/02/18/Hummicam-Raspberry-Pi-wildlife-camera/">Hummicam, Raspberry Pi wildlife camera</a> <span>February 18, 2018</span></li>
+            
+            <li class="recent-item"><a href="/2018/02/01/raspberry-pi-nixie/">Driving a nixie module with a Raspberry Pi</a> <span>February 1, 2018</span></li>
+            
+        </ul><!-- .recent-posts -->
+    </section><!-- .widget-recent-posts -->
+
+    <!--Create a sorted array of tags-->
+    
+    
+    <section class="widget widget-tags">
+        <h2 class="widget-title">Tags</h2>
+        <div class="tagcloud">
+            
+            <a href="/tags/#nature">nature</a>
+            
+            <a href="/tags/#nixie">nixie</a>
+            
+            <a href="/tags/#photography">photography</a>
+            
+            <a href="/tags/#python">python</a>
+            
+            <a href="/tags/#raspberry+pi">raspberry pi</a>
+            
+        </div><!-- .tagcloud -->
+    </section><!-- .widget -->
+
+</aside><!-- .sidebar -->
+
+    </div><!-- .inner -->
+</div><!-- .site-content -->
+
+    <footer class="site-footer">
+    <div class="inner">
+        <div class="social-links">
+            
+            <a href="https://twitter.com/vpatron0" class="fa-twitter square fill-horizontal"><span class="screen-reader-text">Twitter</span></a>
+            
+            
+            <a href="https://www.facebook.com/vince.patron" class="fa-facebook square fill-horizontal"><span class="screen-reader-text">Facebook</span></a>
+            
+            
+            
+            <a href="https://github.com/vpatron0" class="fa-github-alt square fill-horizontal"><span class="screen-reader-text">GitHub</span></a>
+            
+            
+            
+            
+            
+            <a href="http://instagram.com/vpatron0" class="fa-instagram square fill-horizontal"><span class="screen-reader-text">Instagram</span></a>
+            
+            
+            
+            <a href="https://www.linkedin.com/in/vincepatron" class="fa-linkedin square fill-horizontal"><span class="screen-reader-text">LinkedIn</span></a>
+            
+            
+            <a class="fa-feed square fill-horizontal" href="/feed.xml"><span class="screen-reader-text">RSS</span></a>
+        </div><!-- .social-links -->
+        <div class="site-info">
+            &copy; <a href="/">vince.patronweb.com</a> all rights reserved.<br/>Powered by <a target="_blank" href="https://jekyllrb.com/">Jekyll</a>.
+            <a href="#top" id="top-link" class="fa-chevron-up top-link square fill-horizontal"><span class="screen-reader-text">Back to the top</span></a>
+        </div><!-- .site-info -->
+    </div><!-- .inner -->
+</footer><!-- .site-footer -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/plugins.js"></script>
+    <script type="text/javascript" src="/js/custom.js"></script>
+</body>
+</html>
